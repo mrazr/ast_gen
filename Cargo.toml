@@ -8,7 +8,8 @@ edition = "2018"
 image = "0.21.2"
 rand = "0.7.0"
 imageproc = "0.18.0"
+structopt = "0.2.18"
 
 [[bin]]
-name = "main"
+name = "ast_gen"
 path = "bin/main.rs"
