@@ -5,8 +5,14 @@ use std::path::PathBuf;
 
 fn main() {
     let opt = Opt::from_args();
+
+    let axis = if opt.axis_x.is_some() && opt.axis_y.is_some() {
+        Some((opt.axis_x.unwrap(), opt.axis_y.unwrap()))
+    } else {
+        None
+    };
     // println!("{:?}", opt);
-    let mut img = generate(opt.area, opt.intensities);
+    let mut img = generate(opt.area, opt.intensities, axis);
     
     if opt.smooth_param.is_some() {
         img = img.smoothen_all(opt.smooth_param.unwrap());
@@ -60,4 +66,10 @@ struct Opt {
     /// Name of the generated image in color to write
     #[structopt(long = "wc", parse(from_os_str))]
     fname_color: Option<PathBuf>,
+
+    #[structopt(short = "x")]
+    axis_x: Option<f32>,
+
+    #[structopt(short = "y")]
+    axis_y: Option<f32>,
 }

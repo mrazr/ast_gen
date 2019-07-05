@@ -109,7 +109,15 @@ impl GeneratedAsteroid {
     }
 }
 
-pub fn generate(area: u32, bands: usize) -> GeneratedAsteroid {
+pub fn generate(area: u32, bands: usize, axis: Option<(f32, f32)>) -> GeneratedAsteroid {
+    let mut ax = (0.0, 0.0);
+    let push_fac = if let Some(vec) = axis {
+        ax = norm(vec);
+        push_factor
+    } else {
+        fake_push_factor
+    };
+
     let size = (2.5 * area as f32).sqrt() as i32;
     let mut img = GrayImage::new(size as u32, size as u32);
     for (x, y, pixel) in img.enumerate_pixels_mut() {
@@ -118,7 +126,7 @@ pub fn generate(area: u32, bands: usize) -> GeneratedAsteroid {
 
     let mut counter: u32 = 0;
     let mut rng = rand::thread_rng();
-
+    let center = (size as f32 / 2.0, size as f32 / 2.0);
     let mut queue: Vec<(u32, u32)> = Vec::with_capacity((area / 2) as usize);
     queue.push(((size / 2) as u32, (size / 2) as u32));
 
@@ -132,7 +140,9 @@ pub fn generate(area: u32, bands: usize) -> GeneratedAsteroid {
     let mut band_color = 255;
 
     for _ in 0..area {
-
+        if queue.len() == 0 {
+            break;
+        }
         let (x, y) = loop {
             let idx = rng.gen_range(0, queue.len());
             let (x, y) = queue.remove(idx);
@@ -169,7 +179,10 @@ pub fn generate(area: u32, bands: usize) -> GeneratedAsteroid {
                 if img.get_pixel((ix + dx) as u32, (iy + dy) as u32)[0] == 255 {
                     continue;
                 }
-                if true {
+                let vec = (x as f32 - center.0, y as f32 - center.1);
+                let r = rand::random::<f32>();
+                let pf = push_fac(vec, ax);
+                if r < pf {
                     queue.push(((ix + dx) as u32, (iy + dy) as u32));
                 }
             }
@@ -183,4 +196,28 @@ pub fn generate(area: u32, bands: usize) -> GeneratedAsteroid {
         combined_img: None,
         layer_size: (img.width(), img.height())
     }
+}
+
+fn dot(v1: (f32, f32), ax: (f32, f32)) -> f32 {
+    (v1.0 * ax.0 + v1.1 * ax.1)
+}
+
+fn push_factor(v1: (f32, f32), ax: (f32, f32)) -> f32 {
+    if mag(v1) < 0.001 {
+        return 1.1;
+    }
+    dot(norm(v1), ax).abs().max(0.45)
+}
+
+fn norm(v: (f32, f32)) -> (f32, f32) {
+    let mag = mag(v);
+    (v.0 / mag, v.1 / mag)
+}
+
+fn mag(v: (f32, f32)) -> f32 {
+    dot(v, v).sqrt()
+}
+
+fn fake_push_factor(v1: (f32, f32), ax: (f32, f32)) -> f32 {
+    1.1
 }
